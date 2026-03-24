@@ -34,9 +34,8 @@ public record RegistroDeUsuarioDTO(Long id, String username, String email,
                 .map(RegistroDeUsuarioDTO::registroUsuarioToDTO)
                 .toList());
 
-        List<Usuario> test = usuarios.stream()
+        usuarios.stream()
                 .peek(user -> {
-                    System.out.println("1");
                     boolean presente = false;
                     for (RegistroDeUsuarioDTO x: listaCompleta) {
                         if (x.email.equals(user.getEmail())) {
@@ -47,7 +46,7 @@ public record RegistroDeUsuarioDTO(Long id, String username, String email,
                         listaCompleta.add(new RegistroDeUsuarioDTO((long)(Math.random() * (99999 - 1 + 1)) + 1, user.getNome(),
                                 user.getEmail(), null, null, null, StatusRegistro.UNDEFINED));
                     }
-                }).toList();
+                });
 
 
         return listaCompleta;

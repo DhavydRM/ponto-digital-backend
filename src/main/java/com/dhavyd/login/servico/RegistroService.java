@@ -24,22 +24,21 @@ public class RegistroService {
     }
 
     public List<RegistroDeUsuarioDTO> buscarTodos(LocalDate dataInicial, LocalDate dataFinal, boolean allUsers) {
-        List<Registro> registroDePontos = repository.findAll();
+        LocalDateTime inicioDia = dataInicial.atStartOfDay();
+        LocalDateTime fimDia = dataFinal.atTime(LocalTime.MAX);
 
         if (allUsers) { // Por hora, não passar um periodo maior que 1 dia
             List<Usuario> usuarios = usuarioRepository.findByAtivo(true);
-            return RegistroDeUsuarioDTO.listaRegistroAllUsers(registrosPorPeriodo(registroDePontos, dataInicial, dataFinal), usuarios);
+            List<Registro> registros = repository.findByPeriodo(inicioDia, fimDia);
+            return RegistroDeUsuarioDTO.listaRegistroAllUsers(registrosPorPeriodo(registros, dataInicial, dataFinal), usuarios);
         }
 
-        if (Objects.nonNull(dataInicial) && Objects.nonNull(dataFinal)) {
-            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(registrosPorPeriodo(registroDePontos, dataInicial, dataFinal));
+        List<Registro> registros = repository.findByPeriodo(inicioDia, fimDia);
+        if(Objects.nonNull(registros)) {
+            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(registros);
         }
+        return null;
 
-        if (Objects.nonNull(dataInicial)) {
-            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(registrosPorPeriodo(registroDePontos, dataInicial, dataInicial));
-        }
-
-        return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(registroDePontos);
     }
 
     public RegistroDeUsuarioDTO buscarPorId(Long id) {
@@ -48,21 +47,26 @@ public class RegistroService {
     }
 
     public List<RegistroDeUsuarioDTO> buscarPorIdUsuario(Long idUsuario, boolean carregarRegistrosToday, LocalDate dataInicial, LocalDate dataFinal) {
+
         Usuario usuario = usuarioRepository.findById(idUsuario) // Busca o usuário no banco de dados através do ID
                 .orElseThrow(() -> new RecursoNaoEncontrado("Usuário não encontrado!"));
 
         if (carregarRegistrosToday) { // Se verdadeiro, retorna todas os Registros onde a entrada seja do dia requisitado
-         return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(usuario.getRegistroDePontos()
-                    .stream()
-                    .filter(registroDePonto -> registroDePonto.getEntrada().toLocalDate().equals(LocalDate.now()))
-                    .toList());
+            LocalDateTime inicio = LocalDate.now().atStartOfDay();
+            LocalDateTime fim = LocalDate.now().atTime(LocalTime.MAX);
+            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(repository.findByPeriodoPorUser(inicio, fim, idUsuario));
 
         }
 
-        if (Objects.nonNull(dataInicial) && Objects.nonNull(dataFinal)) { // Retorna todos os regitros que estejam dentro do intervalo de DATAINICIAL e DATAFINAL
-            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(registrosPorPeriodo(usuario.getRegistroDePontos(), dataInicial, dataFinal));
+        if (Objects.nonNull(dataFinal)) { // Retorna todos os regitros que estejam dentro do intervalo de DATAINICIAL e DATAFINAL
+            LocalDateTime inicio = dataInicial.atStartOfDay();
+            LocalDateTime fim = dataFinal.atTime(LocalTime.MAX);
+            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(repository.findByPeriodoPorUser(inicio, fim, idUsuario));
+
         } else if (Objects.nonNull(dataInicial)){ // Retorna os registros apenas com entrada de DATAINICIAL
-            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(registrosPorPeriodo(usuario.getRegistroDePontos(), dataInicial, dataInicial));
+            LocalDateTime inicio = dataInicial.atStartOfDay();
+            return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(repository.findByPeriodoPorUser(inicio, inicio, idUsuario));
+
         }
 
         return RegistroDeUsuarioDTO.listaRegistroUsuarioToDTO(usuario.getRegistroDePontos()); // Em ultimo caso, retorna todos os registros que o usuário tem!
