@@ -5,14 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build and Run
 
 ```bash
-mvn clean install          # Build the project
+mvn clean install          # Build the project (skip tests)
 mvn spring-boot:run       # Run the application
 mvn test                  # Run tests
 ```
 
 ## Environment Configuration
 
-The application uses `java-dotenv` to load environment variables from a `.env` file at the project root. Database credentials are loaded in `LoginApplication.main()` and set as system properties before the application starts.
+The application uses `java-dotenv` to load environment variables from a `.env` file at the project root. Database credentials are loaded in `LoginApplication.main()` before Spring Boot starts.
 
 Required `.env` variables:
 ```
@@ -25,23 +25,50 @@ DB_PASSWORD=sua_senha
 
 **Layered structure**: Controllers → Services → Repositories → Entities
 
-- `controllers/` - REST endpoints, HTTP request/response handling
+- `controllers/` - REST endpoints (HTTP request/response)
 - `servico/` - Business logic
-- `repositorios/` - JPA repositories (Spring Data)
+- `repositorios/` - Spring Data JPA repositories
 - `entidades/` - JPA entities and enums
-- `dto/` - Data transfer objects for API responses
+- `dto/` - Data transfer objects
+- `config/` - Configuration (CORS)
 - `auth/` - Authentication (Token class)
 
 **Entities**:
-- `Usuario` - User with roles (ADMIN/EMPLOYEE), one-to-many with Registro
-- `Registro` - Time clock record with entrada/saida timestamps
+- `Usuario` - User entity with roles (ADMIN/EMPLOYEE), one-to-many with Registro
+- `Registro` - Time clock record (entrada/saida timestamps), many-to-one with Usuario
 
-**Key design note**: The `Token` class (auth) uses a static repository pattern rather than standard Spring dependency injection. This is non-typical and requires the `setRepository()` method to be called via `@Autowired` on the setter.
+**Enums**:
+- `Roles` - ADMIN, EMPLOYEE
+- `Turnos` - MANHA, TARDE, NOITE
+- `StatusRegistro` - ABERTO, FECHADO, UNDEFINED
+
+**Key design notes**:
+- `Token` class uses a static repository pattern (non-typical Spring DI) - setter annotated with `@Autowired`
+- `LoginApplication.main()` sets DB credentials as system properties from `.env` before Spring starts
+- `application.properties` uses `${DB_URL}`, `${DB_USER}`, `${DB_PASSWORD}` placeholders
 
 ## API Endpoints
 
-**Users** (`/usuarios`): CRUD + `POST /usuarios/auth` for login
-**Records** (`/registros`): CRUD + `POST /entrada/{usuarioId}` and `POST /saida/{usuarioId}` for clock in/out
+### Users (`/usuarios`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/usuarios` | List all users |
+| GET | `/usuarios/{id}` | Get user by ID |
+| POST | `/usuarios` | Create user |
+| PUT | `/usuarios/{id}` | Update user |
+| DELETE | `/usuarios/{id}` | Delete user |
+| POST | `/usuarios/auth` | Authenticate (returns Token with idUsuario and funcao) |
+
+### Records (`/registros`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/registros?dataInicial=&dataFinal=&allUsers=` | List records with date filters |
+| GET | `/registros/{id}` | Get record by ID |
+| GET | `/registros/usuario/{usuarioId}?carregarRegistrosToday=&dataInicial=&dataFinal=` | Get user's records |
+| POST | `/registros/entrada/{usuarioId}` | Clock in (max 2 per day) |
+| POST | `/registros/saida/{usuarioId}` | Clock out (sets saida on last open record) |
+| PUT | `/registros/{id}` | Update record |
+| DELETE | `/registros/{id}` | Delete record |
 
 ## Docker
 
