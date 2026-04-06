@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public record RegistroDeUsuarioDTO(Long id, String username, String email,
+public record RegistroDeUsuarioDTO(Long id, Long idUsuario, String username, String email,
                                    LocalDateTime entrada, LocalDateTime saida,
                                    Turnos turno, StatusRegistro status) {
 
     public static RegistroDeUsuarioDTO registroUsuarioToDTO(Registro registro) {
-        return new RegistroDeUsuarioDTO(registro.getId(),
-                registro.getUsuario().getNome(), registro.getUsuario().getEmail(),
+        return new RegistroDeUsuarioDTO(registro.getId(), registro.getUsuario().getId(),
+                registro.getUsuario().getNome(),registro.getUsuario().getEmail(),
                 registro.getEntrada(), registro.getSaida(),
                 Turnos.retornarTurno(registro.getEntrada()),
                 StatusRegistro.retornaStatus(registro.getSaida()));
@@ -34,20 +34,27 @@ public record RegistroDeUsuarioDTO(Long id, String username, String email,
                 .map(RegistroDeUsuarioDTO::registroUsuarioToDTO)
                 .toList());
 
-        usuarios.stream()
-                .peek(user -> {
-                    boolean presente = false;
-                    for (RegistroDeUsuarioDTO x: listaCompleta) {
-                        if (x.email.equals(user.getEmail())) {
-                            presente = true;
-                        }
-                    }
-                    if (!presente) {
-                        listaCompleta.add(new RegistroDeUsuarioDTO((long)(Math.random() * (99999 - 1 + 1)) + 1, user.getNome(),
-                                user.getEmail(), null, null, null, StatusRegistro.UNDEFINED));
-                    }
-                });
-
+        for (Usuario user : usuarios) {
+            boolean presente = false;
+            for (RegistroDeUsuarioDTO dto : listaCompleta) {
+                if (dto.email().equals(user.getEmail())) {
+                    presente = true;
+                    break;
+                }
+            }
+            if (!presente) {
+                listaCompleta.add(new RegistroDeUsuarioDTO(
+                        (long) (Math.random() * 99998) + 1,
+                        user.getId(),
+                        user.getNome(),
+                        user.getEmail(),
+                        null,
+                        null,
+                        null,
+                        StatusRegistro.UNDEFINED
+                ));
+            }
+        }
 
         return listaCompleta;
     }
