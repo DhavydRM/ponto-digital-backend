@@ -11,14 +11,15 @@ import java.util.List;
 
 public record RegistroDeUsuarioDTO(Long id, Long idUsuario, String username, String email,
                                    LocalDateTime entrada, LocalDateTime saida,
-                                   Turnos turno, StatusRegistro status) {
+                                   Turnos turno, StatusRegistro status, String observacao) {
 
     public static RegistroDeUsuarioDTO registroUsuarioToDTO(Registro registro) {
         return new RegistroDeUsuarioDTO(registro.getId(), registro.getUsuario().getId(),
                 registro.getUsuario().getNome(),registro.getUsuario().getEmail(),
                 registro.getEntrada(), registro.getSaida(),
                 Turnos.retornarTurno(registro.getEntrada()),
-                StatusRegistro.retornaStatus(registro.getSaida()));
+                StatusRegistro.retornaStatus(registro.getSaida()),
+                registro.getObservacao());
     }
 
     public static List<RegistroDeUsuarioDTO> listaRegistroUsuarioToDTO (List<Registro> registros) {
@@ -51,7 +52,8 @@ public record RegistroDeUsuarioDTO(Long id, Long idUsuario, String username, Str
                         null,
                         null,
                         null,
-                        StatusRegistro.UNDEFINED
+                        StatusRegistro.UNDEFINED,
+                        null
                 ));
             }
         }

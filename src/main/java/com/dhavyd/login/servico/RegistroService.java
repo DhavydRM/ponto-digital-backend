@@ -1,6 +1,7 @@
 package com.dhavyd.login.servico;
 
 import com.dhavyd.login.dto.RegistroDeUsuarioDTO;
+import com.dhavyd.login.dto.RegistroUpdateDTO;
 import com.dhavyd.login.entidades.Registro;
 import com.dhavyd.login.entidades.Usuario;
 import com.dhavyd.login.repositorios.RegistroRepository;
@@ -109,15 +110,16 @@ public class RegistroService {
         repository.deleteById(id);
     }
 
-    public Registro atualizarResgistro(Long id, Registro novosDados) {
+    public Registro atualizarResgistro(Long id, RegistroUpdateDTO novosDados) {
         Registro registro = repository.getReferenceById(id);
         atualizarRegistroDePonto(registro, novosDados);
         return repository.save(registro);
     }
 
-    private void atualizarRegistroDePonto(Registro registro, Registro novosDados) {
-        registro.setEntrada(novosDados.getEntrada());
-        registro.setSaida(novosDados.getSaida());
+    private void atualizarRegistroDePonto(Registro registro, RegistroUpdateDTO novosDados) {
+        registro.setEntrada(novosDados.entrada());
+        registro.setSaida(novosDados.saida());
+        registro.setObservacao(novosDados.observacao());
     }
 
     private List<Registro> registrosPorPeriodo(List<Registro> registroDePontos, LocalDate dataInicial, LocalDate dataFinal) {

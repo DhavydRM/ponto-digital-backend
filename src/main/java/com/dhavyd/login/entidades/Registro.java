@@ -1,11 +1,17 @@
 package com.dhavyd.login.entidades;
 
 import com.dhavyd.login.entidades.enums.Turnos;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "registro_de_ponto")
 public class Registro {
@@ -19,6 +25,11 @@ public class Registro {
     private Usuario usuario;
     private LocalDateTime entrada;
     private LocalDateTime saida;
+    private String observacao;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "registroRelacionado")
+    private List<Ticket> ticket;
 
     public Registro(LocalDateTime entrada, Usuario usuario, Long id) {
         this.entrada = entrada;
@@ -37,36 +48,8 @@ public class Registro {
 
     }
 
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDateTime getSaida() {
-        return saida;
-    }
-
-    public void setSaida(LocalDateTime saida) {
-        this.saida = saida;
-    }
-
-    public LocalDateTime getEntrada() {
-        return entrada;
-    }
-
-    public void setEntrada(LocalDateTime entrada) {
-        this.entrada = entrada;
+    public void setTicket(Ticket ticket) {
+        this.ticket.add(ticket);
     }
 
     @Override

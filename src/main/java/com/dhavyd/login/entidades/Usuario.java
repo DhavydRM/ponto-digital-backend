@@ -33,6 +33,9 @@ public class Usuario implements Serializable{
     @OneToMany(mappedBy = "usuario")
     private List<Registro> registroDePontos;
 
+    @OneToMany
+    private List<Ticket> tickets;
+
     @Override
     public int hashCode() {
         final int prime = 31;

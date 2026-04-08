@@ -7,6 +7,7 @@ import java.util.Objects;
 import com.dhavyd.login.auth.Token;
 import com.dhavyd.login.dto.LoginDTO;
 import com.dhavyd.login.dto.UsuarioDTO;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +16,9 @@ import com.dhavyd.login.repositorios.UsuarioRepository;
 import com.dhavyd.login.servico.execoes.RecursoNaoEncontrado;
 
 @Service
+@AllArgsConstructor
 public class UsuarioService {
 
-    @Autowired
     private UsuarioRepository repository;
 
     public List<UsuarioDTO> buscarTodos() {

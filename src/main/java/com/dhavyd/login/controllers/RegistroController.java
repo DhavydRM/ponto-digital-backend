@@ -1,6 +1,8 @@
 package com.dhavyd.login.controllers;
 
+import com.dhavyd.login.dto.RegistroDTO;
 import com.dhavyd.login.dto.RegistroDeUsuarioDTO;
+import com.dhavyd.login.dto.RegistroUpdateDTO;
 import com.dhavyd.login.entidades.Registro;
 import com.dhavyd.login.servico.RegistroService;
 import lombok.AllArgsConstructor;
@@ -76,9 +78,9 @@ public class RegistroController {
     }
 
     @PutMapping(value = "/{id}") // Atualiza um registro por id
-    public ResponseEntity<Registro> atualizar(@PathVariable Long id,
-                                              @RequestBody Registro RegistroDePonto) {
-        RegistroDePonto = service.atualizarResgistro(id, RegistroDePonto);
-        return ResponseEntity.ok().body(RegistroDePonto);
+    public ResponseEntity<RegistroUpdateDTO> atualizar(@PathVariable Long id,
+                                              @RequestBody RegistroUpdateDTO registroUpdateDTO) {
+        Registro registro = service.atualizarResgistro(id, registroUpdateDTO);
+        return ResponseEntity.ok().body(registroUpdateDTO);
     }
 }
