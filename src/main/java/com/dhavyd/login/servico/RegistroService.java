@@ -78,12 +78,10 @@ public class RegistroService {
         Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow();
         Registro registro = new Registro(registroExato, usuario, null);
 
-        List<Registro> registrosExistentes = usuario.getRegistroDePontos() // Verifica se já tem registros naquele dia
-                .stream()
-                .filter(registroDePonto -> registroDePonto.getEntrada()
-                        .toLocalDate()
-                        .equals(LocalDate.now()))
-                .toList();
+        LocalDateTime inicio = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0, 0));
+        LocalDateTime fim = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+
+        List<Registro> registrosExistentes = repository.findByPeriodoPorUser(inicio, fim, usuario.getId());
 
         if (registrosExistentes.size() >= 2) {
             return null; // Não permite que o usuário marque mais de 2 entradas no mesmo dia
@@ -94,9 +92,12 @@ public class RegistroService {
 
     public Registro marcarSaida(Long usuarioId) {
         LocalDateTime registroExato = LocalDateTime.now();
-        Usuario user = usuarioRepository.findById(usuarioId).orElse(null);
-        assert user != null;
-        Registro ultimoRegistro = user.getRegistroDePontos().getLast();
+        Usuario user = usuarioRepository.findById(usuarioId).orElseThrow();
+
+        LocalDateTime inicio = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0, 0));
+        LocalDateTime fim = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        Registro ultimoRegistro= repository.findByPeriodoPorUser(inicio, fim, user.getId()).getLast();
+
 
         if (!Objects.nonNull(ultimoRegistro.getSaida())) { // Retorna verdadeiro se a saída do usuário estiver vazia
             ultimoRegistro.setSaida(registroExato);
