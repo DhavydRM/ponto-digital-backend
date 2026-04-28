@@ -22,7 +22,7 @@ public class UsuarioService {
     private UsuarioRepository repository;
 
     public List<UsuarioDTO> buscarTodos() {
-        List<Usuario> usuarioList = repository.findAll();
+        List<Usuario> usuarioList = repository.findByAtivo(true);
 
         return usuarioList
                 .stream()
