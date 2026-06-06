@@ -10,13 +10,13 @@ import java.util.List;
 
 public interface RegistroRepository extends JpaRepository<Registro, Long> {
 
-    @Query("SELECT r FROM Registro r WHERE r.entrada >= :inicio AND r.entrada <= :fim")
+    @Query("SELECT r FROM Registro r WHERE r.entrada >= :inicio AND r.entrada <= :fim ORDER BY r.entrada ASC")
     List<Registro> findByPeriodo(
         @Param("inicio") LocalDateTime inicio,
         @Param("fim") LocalDateTime fim
     );
 
-    @Query(value = "SELECT * FROM registro_de_ponto WHERE entrada >= :inicio AND entrada <= :fim AND usuario_id = :usuarioId", nativeQuery = true)
+    @Query(value = "SELECT * FROM registro_de_ponto WHERE entrada >= :inicio AND entrada <= :fim AND usuario_id = :usuarioId ORDER BY entrada ASC", nativeQuery = true)
     List<Registro> findByPeriodoPorUser(
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,
