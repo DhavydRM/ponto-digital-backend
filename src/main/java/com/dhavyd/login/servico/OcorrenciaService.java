@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -17,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dhavyd.login.dto.ResolverOcorrenciaDTO;
+import com.dhavyd.login.dto.ResumoFaltasDTO;
 import com.dhavyd.login.dto.SaldoBancoHorasDTO;
+import com.dhavyd.login.dto.SaldoBancoHorasResumoDTO;
 import com.dhavyd.login.entidades.EscalaTrabalho;
 import com.dhavyd.login.entidades.OcorrenciaAusencia;
 import com.dhavyd.login.entidades.Registro;
@@ -111,8 +115,6 @@ public class OcorrenciaService {
         return new ByteArrayResource(bytes);
     }
 
-    // TODO: BANCO DE HORAS — ativar endpoint quando módulo for liberado
-    // public SaldoBancoHorasDTO calcularSaldoBancoHoras(Long usuarioId, LocalDate inicio, LocalDate fim) {
     public SaldoBancoHorasDTO calcularSaldoBancoHoras(Long usuarioId, LocalDate inicio, LocalDate fim) {
         List<EscalaTrabalho> escalas = escalaRepository.findByUsuarioIdAndAtivoTrue(usuarioId);
         List<OcorrenciaAusencia> ocorrencias = ocorrenciaRepository
@@ -123,9 +125,16 @@ public class OcorrenciaService {
         double horasJustificadas = 0;
         double horasIgnoradas = 0;
 
-        for (EscalaTrabalho escala : escalas) {
-            long minutos = Duration.between(escala.getHoraEntrada(), escala.getHoraSaida()).toMinutes();
-            horasEsperadas += minutos / 60.0;
+        LocalDate cursor = inicio;
+        while (!cursor.isAfter(fim)) {
+            DayOfWeek dow = cursor.getDayOfWeek();
+            for (EscalaTrabalho escala : escalas) {
+                if (escala.getDiaSemana() == dow) {
+                    long minutos = Duration.between(escala.getHoraEntrada(), escala.getHoraSaida()).toMinutes();
+                    horasEsperadas += minutos / 60.0;
+                }
+            }
+            cursor = cursor.plusDays(1);
         }
 
         List<Registro> registros = registroRepository.findByPeriodoPorUser(
@@ -139,6 +148,7 @@ public class OcorrenciaService {
         }
 
         for (OcorrenciaAusencia o : ocorrencias) {
+            if (o.getTurnoEsperadoInicio() == null || o.getTurnoEsperadoFim() == null) continue;
             long minutos = Duration.between(o.getTurnoEsperadoInicio(), o.getTurnoEsperadoFim()).toMinutes();
             double horas = minutos / 60.0;
             if (o.getStatus() == StatusOcorrencia.JUSTIFICADO_ATESTADO) {
@@ -154,5 +164,39 @@ public class OcorrenciaService {
         return new SaldoBancoHorasDTO(
                 horasEsperadas, horasRegistradas, horasJustificadas,
                 horasIgnoradas, horasDescontadas, saldoFinal);
+    }
+
+    public List<SaldoBancoHorasResumoDTO> calcularSaldoTodos(LocalDate inicio, LocalDate fim) {
+        List<Usuario> ativos = usuarioRepository.findByAtivo(true);
+        return ativos.stream()
+                .map(u -> SaldoBancoHorasResumoDTO.from(
+                        u.getId(), u.getNome(),
+                        calcularSaldoBancoHoras(u.getId(), inicio, fim)))
+                .toList();
+    }
+
+    public ResumoFaltasDTO resumoPorUsuario(Long usuarioId, LocalDate inicio, LocalDate fim) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontrado("Usuário não encontrado!"));
+        List<OcorrenciaAusencia> ocorrencias =
+                ocorrenciaRepository.findByUsuarioIdAndDataBetween(usuarioId, inicio, fim);
+        return buildResumo(usuario, ocorrencias);
+    }
+
+    public List<ResumoFaltasDTO> resumoTodos(LocalDate inicio, LocalDate fim) {
+        List<OcorrenciaAusencia> todas = ocorrenciaRepository.findByDataBetween(inicio, fim);
+        return todas.stream()
+                .collect(Collectors.groupingBy(OcorrenciaAusencia::getUsuario))
+                .entrySet().stream()
+                .map(e -> buildResumo(e.getKey(), e.getValue()))
+                .toList();
+    }
+
+    private ResumoFaltasDTO buildResumo(Usuario usuario, List<OcorrenciaAusencia> ocorrencias) {
+        int pendentes    = (int) ocorrencias.stream().filter(o -> o.getStatus() == StatusOcorrencia.PENDENTE).count();
+        int justificadas = (int) ocorrencias.stream().filter(o -> o.getStatus() == StatusOcorrencia.JUSTIFICADO_ATESTADO).count();
+        int ignoradas    = (int) ocorrencias.stream().filter(o -> o.getStatus() == StatusOcorrencia.IGNORADO).count();
+        return new ResumoFaltasDTO(usuario.getId(), usuario.getNome(),
+                ocorrencias.size(), justificadas, ignoradas, pendentes);
     }
 }

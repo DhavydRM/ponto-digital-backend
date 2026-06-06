@@ -13,4 +13,5 @@ public interface EscalaTrabalhoRepository extends JpaRepository<EscalaTrabalho, 
     List<EscalaTrabalho> findByUsuarioId(Long usuarioId);
     List<EscalaTrabalho> findByUsuarioIdAndAtivoTrue(Long usuarioId);
     boolean existsByUsuarioIdAndDiaSemanaAndAtivoTrue(Long usuarioId, DayOfWeek diaSemana);
+    List<EscalaTrabalho> findByAtivoTrue();
 }

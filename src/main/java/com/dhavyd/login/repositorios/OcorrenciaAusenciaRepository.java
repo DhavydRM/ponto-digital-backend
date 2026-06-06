@@ -18,4 +18,5 @@ public interface OcorrenciaAusenciaRepository extends JpaRepository<OcorrenciaAu
     boolean existsByUsuarioIdAndDataAndTurnoEsperadoInicio(Long usuarioId, LocalDate data, LocalTime turnoEsperadoInicio);
     List<OcorrenciaAusencia> findByStatus(StatusOcorrencia status);
     List<OcorrenciaAusencia> findByUsuarioIdAndDataBetween(Long usuarioId, LocalDate inicio, LocalDate fim);
+    List<OcorrenciaAusencia> findByDataBetween(LocalDate inicio, LocalDate fim);
 }

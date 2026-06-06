@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dhavyd.login.dto.ResolverOcorrenciaDTO;
+import com.dhavyd.login.dto.ResumoFaltasDTO;
 import com.dhavyd.login.entidades.OcorrenciaAusencia;
 import com.dhavyd.login.servico.DeteccaoAusenciaService;
 import com.dhavyd.login.servico.OcorrenciaService;
+
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 
@@ -69,7 +72,18 @@ public class OcorrenciaController {
         return ResponseEntity.ok(total);
     }
 
-    // TODO: BANCO DE HORAS — ativar quando módulo for liberado
-    // @GetMapping(value = "/saldo/{usuarioId}")
-    // public ResponseEntity<SaldoBancoHorasDTO> saldo(...) { ... }
+    @GetMapping(value = "/resumo/{usuarioId}")
+    public ResponseEntity<ResumoFaltasDTO> resumoPorUsuario(
+            @PathVariable Long usuarioId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        return ResponseEntity.ok(service.resumoPorUsuario(usuarioId, inicio, fim));
+    }
+
+    @GetMapping(value = "/resumo")
+    public ResponseEntity<List<ResumoFaltasDTO>> resumoTodos(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        return ResponseEntity.ok(service.resumoTodos(inicio, fim));
+    }
 }
